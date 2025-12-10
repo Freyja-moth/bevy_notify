@@ -47,4 +47,4 @@ Docs aren't great atm, will improve in time but for the time being just make an 
 
 ## Future Work
 
-Use many to many relationships once we have them so that multiple entities can be watched at once.
+Use many to many relationships once we have them so that multiple entities can be watched at once. For now the same effect can be achieved by using a custom relationship.
