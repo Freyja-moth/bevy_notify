@@ -58,21 +58,30 @@ fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
 
     let player = commands
-        .spawn((Name::new("Player"), Player, Health(100)))
+        .spawn((
+            Name::new("Player"),
+            Player,
+            Health(100),
+            MoniteringSelf,
+            NotifyChanged::<Health>::default(),
+            observe(|_: On<ComponentChanged<Health>>| {
+                println!("Health has been changed");
+            }),
+        ))
         .id();
 
     commands.spawn((
         UiRoot,
         children![(
             HealthBar,
-            Monitering(player),
-            Notify::<Health>::default(),
+            Monitoring(player),
+            NotifyChanged::<Health>::default(),
             observe(
-                |changed: On<MoniterChanged<Health>>,
-                 mut health_bar: Query<(&mut Node, &Monitering)>,
+                |changed: On<ComponentChanged<Health>>,
+                 mut health_bar: Query<(&mut Node, &Monitoring)>,
                  health: Query<&Health>|
                  -> Result<(), BevyError> {
-                    let (mut node, &Monitering(player)) = health_bar.get_mut(changed.entity)?;
+                    let (mut node, &Monitoring(player)) = health_bar.get_mut(changed.entity)?;
 
                     let health = health.get(player)?;
 

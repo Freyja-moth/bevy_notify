@@ -1,1 +1,6 @@
-pub use crate::moniters::{MoniterChanged, MoniteredBy, Monitering, Notify};
+pub use crate::{
+    added::{ComponentAdded, NotifyAdded},
+    changed::{ComponentChanged, NotifyChanged},
+    monitors::{MoniteredBy, MoniteringSelf, Monitoring},
+    removed::{ComponentRemoved, NotifyRemoved},
+};
