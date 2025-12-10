@@ -77,13 +77,13 @@ fn setup(mut commands: Commands) {
             Monitoring(player),
             NotifyChanged::<Health>::default(),
             observe(
-                |changed: On<Mutation<Health>>,
-                 mut health_bar: Query<(&mut Node, &Monitoring)>,
+                |mutation: On<Mutation<Health>>,
+                 mut health_bar: Query<&mut Node>,
                  health: Query<&Health>|
                  -> Result<(), BevyError> {
-                    let (mut node, &Monitoring(player)) = health_bar.get_mut(changed.entity)?;
+                    let mut node = health_bar.get_mut(mutation.entity)?;
 
-                    let health = health.get(player)?;
+                    let health = health.get(mutation.mutated)?;
 
                     node.width = percent(health.0 as f32);
                     Ok(())

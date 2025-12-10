@@ -13,7 +13,7 @@ struct DetectingChanges<C>(PhantomData<C>);
 pub struct Mutation<C: Component> {
     pub entity: Entity,
     /// The [`Entity`] that [`C`] belongs to.
-    pub changed: Entity,
+    pub mutated: Entity,
     pub(crate) _phantom: PhantomData<C>,
 }
 
@@ -55,7 +55,7 @@ fn watch_for_change<C: Component>(
             .for_each(|(monitor, _)| {
                 commands.trigger(Mutation {
                     entity: monitor,
-                    changed: entity,
+                    mutated: entity,
                     _phantom: PhantomData::<C>,
                 })
             })
