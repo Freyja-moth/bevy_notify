@@ -12,6 +12,8 @@ struct DetectingChanges<C>(PhantomData<C>);
 /// Indicates that the component [`C`] on the monitered entity has changed.
 pub struct ComponentChanged<C: Component> {
     pub entity: Entity,
+    /// The [`Entity`] that [`C`] belongs to.
+    pub changed: Entity,
     pub(crate) _phantom: PhantomData<C>,
 }
 
@@ -44,15 +46,18 @@ fn watch_for_change<C: Component>(
     monitored: Populated<Entity, Changed<C>>,
     monitors: Populated<(Entity, Option<&Monitoring>), With<NotifyChanged<C>>>,
 ) {
-    monitors
-        .iter()
-        .filter(|(_, monitoring)| {
-            monitoring.is_none_or(|&Monitoring(entity)| monitored.contains(entity))
-        })
-        .for_each(|(entity, _)| {
-            commands.trigger(ComponentChanged {
-                entity,
-                _phantom: PhantomData::<C>,
+    for entity in monitored {
+        monitors
+            .iter()
+            .filter(|(_, monitoring)| {
+                monitoring.is_none_or(|&Monitoring(monitored)| monitored == entity)
             })
-        });
+            .for_each(|(monitor, _)| {
+                commands.trigger(ComponentChanged {
+                    entity: monitor,
+                    changed: entity,
+                    _phantom: PhantomData::<C>,
+                })
+            })
+    }
 }
