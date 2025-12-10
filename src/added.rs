@@ -8,7 +8,7 @@ struct DetectingAdded<C: Component>(PhantomData<C>);
 
 #[derive(EntityEvent)]
 /// Indicates that the component [`C`] on the monitered entity has been added.
-pub struct ComponentAdded<C: Component> {
+pub struct Addition<C: Component> {
     pub entity: Entity,
     /// The [`Entity`] that [`C`] was added to.
     pub added: Entity,
@@ -44,7 +44,7 @@ pub(crate) fn notify_on_add<C: Component>(
         .iter()
         .filter(|(_, monitoring)| monitoring.is_none_or(|&Monitoring(entity)| entity == add.entity))
         .for_each(|(entity, _)| {
-            commands.trigger(ComponentAdded {
+            commands.trigger(Addition {
                 entity,
                 added: add.entity,
                 _phantom: PhantomData::<C>,

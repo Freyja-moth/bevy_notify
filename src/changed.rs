@@ -10,7 +10,7 @@ struct DetectingChanges<C>(PhantomData<C>);
 
 #[derive(EntityEvent)]
 /// Indicates that the component [`C`] on the monitered entity has changed.
-pub struct ComponentChanged<C: Component> {
+pub struct Mutated<C: Component> {
     pub entity: Entity,
     /// The [`Entity`] that [`C`] belongs to.
     pub changed: Entity,
@@ -53,7 +53,7 @@ fn watch_for_change<C: Component>(
                 monitoring.is_none_or(|&Monitoring(monitored)| monitored == entity)
             })
             .for_each(|(monitor, _)| {
-                commands.trigger(ComponentChanged {
+                commands.trigger(Mutated {
                     entity: monitor,
                     changed: entity,
                     _phantom: PhantomData::<C>,

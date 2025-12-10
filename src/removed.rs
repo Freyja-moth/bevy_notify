@@ -7,7 +7,7 @@ struct DetectingRemoved<C: Component>(PhantomData<C>);
 
 #[derive(EntityEvent)]
 /// Indicates that the component [`C`] on the monitered entity has been removed.
-pub struct ComponentRemoved<C: Component> {
+pub struct Removal<C: Component> {
     pub entity: Entity,
     /// The [`Entity`] that [`C`] was removed from.
     pub removed: Entity,
@@ -45,7 +45,7 @@ pub(crate) fn notify_on_remove<C: Component>(
             monitoring.is_none_or(|&Monitoring(entity)| entity == remove.entity)
         })
         .for_each(|(entity, _)| {
-            commands.trigger(ComponentRemoved {
+            commands.trigger(Removal {
                 entity,
                 removed: remove.entity,
                 _phantom: PhantomData::<C>,
