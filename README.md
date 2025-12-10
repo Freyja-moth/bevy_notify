@@ -13,8 +13,8 @@ let player = commands
         Name::new("Player"),
         Health(100),
         MonitorSelf,
-        observe(|changed: On<Mutation<Health>>, health: Query<&Health>| -> Result<(), BevyError> {
-            let current_health = health.get(changed.entity)?;
+        observe(|mutation: On<Mutation<Health>>, health: Query<&Health>| -> Result<(), BevyError> {
+            let current_health = health.get(mutation.entity)?;
 
             println!("My current health is {}", current_health);
         })
@@ -26,10 +26,10 @@ commands.spawn((
     Monitoring(player),
     Notify::<Health>::default(),
     observe(
-        |changed: On<Mutation<Health>>,
+        |mutation: On<Mutation<Health>>,
         mut health: Query<&mut Health>|
         -> Result<(), BevyError> {
-            let mut health = health.get_mut(changed.changed)?;
+            let mut health = health.get_mut(mutation.mutated)?;
 
             if health.0 <= 20 {
                 health.0 += 20;
