@@ -11,7 +11,13 @@ pub struct Health(pub u8);
 let player = commands
     .spawn((
         Name::new("Player"),
-        Health(100)
+        Health(100),
+        MonitorSelf,
+        observe(|changed: On<ComponentChanged<Health>>, health: Query<&Health>| -> Result<(), BevyError> {
+            let current_health = health.get(changed.entity)?;
+
+            println!("My current health is {}", current_health);
+        })
     ))
     .id();
 
@@ -21,12 +27,9 @@ commands.spawn((
     Notify::<Health>::default(),
     observe(
         |changed: On<ComponentChanged<Health>>,
-        mut health: Query<&mut Health>,
-        monitoring: Query<&Monitoring>|
+        mut health: Query<&mut Health>|
         -> Result<(), BevyError> {
-            let &Monitoring(player) = monitoring.get(changed.entity)?;
-
-            let mut health = health.get_mut(player)?;
+            let mut health = health.get_mut(changed.changed)?;
 
             if health.0 <= 20 {
                 health.0 += 20;
@@ -42,4 +45,6 @@ commands.spawn((
 
 Docs aren't great atm, will improve in time but for the time being just make an issue whenever you run into something.
 
+## Future Work
 
+Use many to many relationships once we have them so that multiple entities can be watched at once.
