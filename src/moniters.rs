@@ -1,9 +1,6 @@
+use bevy_app::Update;
+use bevy_ecs::{lifecycle::HookContext, prelude::*, world::DeferredWorld};
 use std::marker::PhantomData;
-
-use bevy::{
-    ecs::{lifecycle::HookContext, world::DeferredWorld},
-    prelude::*,
-};
 
 #[derive(Resource)]
 /// Used to indicate that the component [`C`] is being watched by a system to prevent systems from
