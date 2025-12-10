@@ -66,6 +66,7 @@ pub struct Monitering(pub Entity);
 
 #[derive(Component)]
 #[component(on_add = register_component_moniter::<C>)]
+/// Specifies that a moniter should react to all changed to [`C`] on the monitered entity.
 pub struct Notify<C: Component>(PhantomData<C>);
 impl<C: Component> Default for Notify<C> {
     fn default() -> Self {
