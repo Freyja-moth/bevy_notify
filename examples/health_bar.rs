@@ -64,7 +64,7 @@ fn setup(mut commands: Commands) {
             Health(100),
             MoniteringSelf,
             NotifyChanged::<Health>::default(),
-            observe(|_: On<ComponentChanged<Health>>| {
+            observe(|_: On<Mutation<Health>>| {
                 println!("Health has been changed");
             }),
         ))
@@ -77,7 +77,7 @@ fn setup(mut commands: Commands) {
             Monitoring(player),
             NotifyChanged::<Health>::default(),
             observe(
-                |changed: On<ComponentChanged<Health>>,
+                |changed: On<Mutation<Health>>,
                  mut health_bar: Query<(&mut Node, &Monitoring)>,
                  health: Query<&Health>|
                  -> Result<(), BevyError> {
