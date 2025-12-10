@@ -17,14 +17,14 @@ let player = commands
 
 commands.spawn((
     Name::new("Doctor"),
-    Monitering(player),
+    Monitoring(player),
     Notify::<Health>::default(),
     observe(
-        |changed: On<MoniterChanged<Health>>,
+        |changed: On<ComponentChanged<Health>>,
         mut health: Query<&mut Health>,
-        monitering: Query<&Monitering>|
+        monitoring: Query<&Monitoring>|
         -> Result<(), BevyError> {
-            let &Monitering(player) = monitering.get(changed.entity)?;
+            let &Monitoring(player) = monitoring.get(changed.entity)?;
 
             let mut health = health.get_mut(player)?;
 

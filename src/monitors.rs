@@ -2,7 +2,7 @@ use bevy_ecs::prelude::*;
 
 #[derive(Component)]
 #[relationship_target(relationship = Monitoring)]
-/// Contains all the moniters that are watching this entity.
+/// Contains all the monitors that are watching this entity.
 pub struct MoniteredBy(Vec<Entity>);
 
 #[derive(Component)]
