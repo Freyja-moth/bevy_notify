@@ -37,8 +37,20 @@ impl<C: Component> NotifyRemoved<C> {
 pub(crate) fn notify_on_remove<C: Component>(
     remove: On<Remove, C>,
     mut commands: Commands,
-    monitors: Populated<(Entity, Option<&Monitoring>), With<NotifyAdded<C>>>,
+    internal_monitors: Query<(), (With<MoniteringSelf>, With<NotifyRemoved<C>>)>,
+    monitors: Query<
+        (Entity, Option<&Monitoring>),
+        (With<NotifyRemoved<C>>, Without<MoniteringSelf>),
+    >,
 ) {
+    if internal_monitors.contains(remove.entity) {
+        commands.trigger(Removal {
+            entity: remove.entity,
+            removed: remove.entity,
+            _phantom: PhantomData::<C>,
+        });
+    }
+
     monitors
         .iter()
         .filter(|(_, monitoring)| {
