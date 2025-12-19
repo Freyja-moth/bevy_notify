@@ -38,8 +38,8 @@ impl<C: Component> NotifyAdded<C> {
 pub(crate) fn notify_on_add<C: Component>(
     add: On<Add, C>,
     mut commands: Commands,
-    internal_monitors: Query<(), (With<MoniteringSelf>, With<NotifyAdded<C>>)>,
-    monitors: Query<(Entity, Option<&Monitoring>), (With<NotifyAdded<C>>, Without<MoniteringSelf>)>,
+    internal_monitors: Query<(), (With<MonitoringSelf>, With<NotifyAdded<C>>)>,
+    monitors: Query<(Entity, Option<&Monitoring>), (With<NotifyAdded<C>>, Without<MonitoringSelf>)>,
 ) {
     if internal_monitors.contains(add.entity) {
         commands.trigger(Removal {

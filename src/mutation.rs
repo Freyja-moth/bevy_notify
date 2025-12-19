@@ -1,9 +1,10 @@
 use crate::prelude::*;
 use bevy_app::Update;
 use bevy_ecs::{lifecycle::HookContext, prelude::*, world::DeferredWorld};
+use bevy_reflect::Reflect;
 use std::marker::PhantomData;
 
-#[derive(Resource)]
+#[derive(Resource, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 /// Used to indicate that the component [`C`] is being watched by a system to prevent systems from
 /// being added multiple times.
 struct DetectingChanges<C>(PhantomData<C>);
@@ -16,8 +17,7 @@ pub struct Mutation<C: Component> {
     pub mutated: Entity,
     pub(crate) _phantom: PhantomData<C>,
 }
-
-#[derive(Component)]
+#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[component(on_add = NotifyChanged::<C>::register_component_change_system)]
 /// Specifies that a moniter should react to all changed to [`C`] on the monitered entity.
 pub struct NotifyChanged<C: Component>(PhantomData<C>);
@@ -43,10 +43,10 @@ impl<C: Component> NotifyChanged<C> {
 
 fn watch_for_change<C: Component>(
     mut commands: Commands,
-    monitored: Populated<(Entity, Has<MoniteringSelf>, Has<NotifyChanged<C>>), Changed<C>>,
+    monitored: Populated<(Entity, Has<MonitoringSelf>, Has<NotifyChanged<C>>), Changed<C>>,
     monitors: Query<
         (Entity, Option<&Monitoring>),
-        (With<NotifyChanged<C>>, Without<MoniteringSelf>),
+        (With<NotifyChanged<C>>, Without<MonitoringSelf>),
     >,
 ) {
     for (entity, monitering_self, notify_changed) in monitored {

@@ -1,12 +1,13 @@
 use bevy_ecs::prelude::*;
+use bevy_reflect::Reflect;
 
-#[derive(Component)]
+#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Debug)]
 #[relationship_target(relationship = Monitoring)]
 /// Contains all the monitors that are watching this entity.
-pub struct MoniteredBy(Vec<Entity>);
+pub struct MonitoredBy(Vec<Entity>);
 
-#[derive(Component)]
-#[relationship(relationship_target = MoniteredBy)]
+#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[relationship(relationship_target = MonitoredBy)]
 /// A moniter is updated each time the components of the entity it's watching are changed.
 ///
 /// To control which components are watched use [`Notify`]
@@ -50,6 +51,6 @@ pub struct MoniteredBy(Vec<Entity>);
 /// ```
 pub struct Monitoring(pub Entity);
 
-#[derive(Component)]
+#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 /// Used to detect changes on the same entity.
-pub struct MoniteringSelf;
+pub struct MonitoringSelf;

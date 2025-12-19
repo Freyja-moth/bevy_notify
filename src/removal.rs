@@ -1,8 +1,9 @@
 use crate::prelude::*;
 use bevy_ecs::{lifecycle::HookContext, prelude::*, world::DeferredWorld};
+use bevy_reflect::Reflect;
 use std::marker::PhantomData;
 
-#[derive(Resource)]
+#[derive(Resource, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 struct DetectingRemoved<C: Component>(PhantomData<C>);
 
 #[derive(EntityEvent)]
@@ -14,7 +15,8 @@ pub struct Removal<C: Component> {
     pub(crate) _phantom: PhantomData<C>,
 }
 
-#[derive(Component)]
+#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[component(on_add = NotifyAdded::<C>::register_component_add_observer)]
 #[component(on_add = NotifyRemoved::<C>::register_component_add_observer)]
 pub struct NotifyRemoved<C: Component>(PhantomData<C>);
 impl<C: Component> Default for NotifyRemoved<C> {
@@ -37,10 +39,10 @@ impl<C: Component> NotifyRemoved<C> {
 pub(crate) fn notify_on_remove<C: Component>(
     remove: On<Remove, C>,
     mut commands: Commands,
-    internal_monitors: Query<(), (With<MoniteringSelf>, With<NotifyRemoved<C>>)>,
+    internal_monitors: Query<(), (With<MonitoringSelf>, With<NotifyRemoved<C>>)>,
     monitors: Query<
         (Entity, Option<&Monitoring>),
-        (With<NotifyRemoved<C>>, Without<MoniteringSelf>),
+        (With<NotifyRemoved<C>>, Without<MonitoringSelf>),
     >,
 ) {
     if internal_monitors.contains(remove.entity) {

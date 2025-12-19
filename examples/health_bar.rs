@@ -62,7 +62,7 @@ fn setup(mut commands: Commands) {
             Name::new("Player"),
             Player,
             Health(100),
-            MoniteringSelf,
+            MonitoringSelf,
             NotifyChanged::<Health>::default(),
             observe(|_: On<Mutation<Health>>| {
                 println!("Health has been changed");
