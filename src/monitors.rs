@@ -51,6 +51,6 @@ pub struct MonitoredBy(Vec<Entity>);
 /// ```
 pub struct Monitoring(pub Entity);
 
-#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Debug)]
 /// Used to detect changes on the same entity.
 pub struct MonitoringSelf;
