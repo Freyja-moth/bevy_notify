@@ -24,7 +24,7 @@ let player = commands
 commands.spawn((
     Name::new("Doctor"),
     Monitoring(player),
-    Notify::<Health>::default(),
+    NotifyChanged::<Health>::default(),
     observe(
         |mutation: On<Mutation<Health>>,
         mut health: Query<&mut Health>|
