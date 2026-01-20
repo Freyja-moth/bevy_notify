@@ -1,12 +1,12 @@
 [package]
 name = "bevy_notify"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 
 [dependencies]
-bevy_app = "0.17.3"
-bevy_ecs = "0.17.3"
-bevy_reflect = "0.17.3"
+bevy_app = "0.18.0"
+bevy_ecs = "0.18.0"
+bevy_reflect = "0.18.0"
 
 [dev-dependencies]
-bevy = { version = "0.17.3", features = ["experimental_bevy_ui_widgets"] }
+bevy = { version = "0.18.0", features = ["experimental_bevy_ui_widgets"] }
