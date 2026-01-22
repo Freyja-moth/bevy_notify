@@ -4,6 +4,12 @@ use bevy::{
 };
 use bevy_notify::prelude::*;
 
+#[derive(EntityEvent)]
+pub struct Hurt {
+    entity: Entity,
+    damage: u8,
+}
+
 #[derive(Component)]
 #[require(
     Node {
@@ -64,41 +70,77 @@ fn setup(mut commands: Commands) {
             Health(100),
             MonitoringSelf,
             NotifyChanged::<Health>::default(),
-            observe(|_: On<Mutation<Health>>| {
-                println!("Health has been changed");
+            NotifyRemoved::<Player>::default(),
+            observe(|_: On<Removal<Player>>, mut commands: Commands| {
+                commands.write_message(AppExit::Success);
             }),
+            observe(
+                |player: On<Mutation<Health>>,
+                 mut commands: Commands,
+                 health: Query<&Health>|
+                 -> Result<(), BevyError> {
+                    let Health(health) = health.get(player.entity)?;
+
+                    if *health == 0 {
+                        commands.entity(player.entity).remove::<Player>();
+                    }
+
+                    Ok(())
+                },
+            ),
+            observe(
+                |player: On<Hurt>, mut health: Query<&mut Health>| -> Result<(), BevyError> {
+                    let mut health = health.get_mut(player.entity)?;
+
+                    health.0 = health.0.saturating_sub(player.damage);
+
+                    Ok(())
+                },
+            ),
         ))
         .id();
 
     commands.spawn((
         UiRoot,
-        children![(
-            HealthBar,
-            Monitoring(player),
-            NotifyChanged::<Health>::default(),
-            observe(
-                |mutation: On<Mutation<Health>>,
-                 mut health_bar: Query<&mut Node>,
-                 health: Query<&Health>|
-                 -> Result<(), BevyError> {
-                    let mut node = health_bar.get_mut(mutation.entity)?;
+        children![
+            (
+                HealthBar,
+                Monitoring(player),
+                NotifyChanged::<Health>::default(),
+                observe(
+                    |mutation: On<Mutation<Health>>,
+                     mut health_bar: Query<&mut Node>,
+                     health: Query<&Health>|
+                     -> Result<(), BevyError> {
+                        let mut node = health_bar.get_mut(mutation.entity)?;
 
-                    let health = health.get(mutation.mutated)?;
+                        let health = health.get(mutation.mutated)?;
 
-                    node.width = percent(health.0 as f32);
-                    Ok(())
-                }
+                        node.width = percent(health.0 as f32);
+                        Ok(())
+                    }
+                )
+            ),
+            (
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    justify_self: JustifySelf::End,
+                    ..Default::default()
+                },
+                children![
+                    Text::new("Press Space to take damage"),
+                    Text::new("Press Delete to heal")
+                ]
             )
-        )],
+        ],
     ));
 }
 
-fn harm_player(mut commands: Commands, mut health: Single<&mut Health, With<Player>>) {
-    health.0 = health.0.saturating_sub(10);
-
-    if health.0 == 0 {
-        commands.write_message(AppExit::Success);
-    }
+fn harm_player(mut commands: Commands, player: Single<Entity, With<Player>>) {
+    commands.trigger(Hurt {
+        entity: *player,
+        damage: 10,
+    });
 }
 
 fn reset_health(mut health: Single<&mut Health, With<Player>>) {
