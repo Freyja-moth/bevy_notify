@@ -38,25 +38,41 @@ impl<C: Component> NotifyAdded<C> {
 pub(crate) fn notify_on_add<C: Component>(
     add: On<Add, C>,
     mut commands: Commands,
-    internal_monitors: Query<(), (With<MonitoringSelf>, With<NotifyAdded<C>>)>,
-    monitors: Query<(Entity, Option<&Monitoring>), (With<NotifyAdded<C>>, Without<MonitoringSelf>)>,
+    local_monitors: Query<Entity, (With<NotifyAdded<C>>, With<MonitoringSelf>)>,
+    monitors: Query<(Entity, &Monitoring), (With<NotifyAdded<C>>, Without<MonitoringSelf>)>,
+    global_monitors: Query<
+        Entity,
+        (
+            With<NotifyAdded<C>>,
+            Without<Monitoring>,
+            Without<MonitoringSelf>,
+        ),
+    >,
 ) {
-    if internal_monitors.contains(add.entity) {
-        commands.trigger(Removal {
+    if local_monitors.contains(add.entity) {
+        commands.trigger(Addition::<C> {
             entity: add.entity,
-            removed: add.entity,
-            _phantom: PhantomData::<C>,
+            added: add.entity,
+            _phantom: PhantomData,
         });
-    }
+    };
 
     monitors
         .iter()
-        .filter(|(_, monitoring)| monitoring.is_none_or(|&Monitoring(entity)| entity == add.entity))
-        .for_each(|(entity, _)| {
-            commands.trigger(Addition {
+        .filter(|(_, Monitoring(entity))| *entity == add.entity)
+        .for_each(|(entity, &Monitoring(added))| {
+            commands.trigger(Addition::<C> {
                 entity,
-                added: add.entity,
-                _phantom: PhantomData::<C>,
-            })
+                added,
+                _phantom: PhantomData,
+            });
         });
+
+    global_monitors.iter().for_each(|entity| {
+        commands.trigger(Addition::<C> {
+            entity,
+            added: add.entity,
+            _phantom: PhantomData,
+        });
+    });
 }

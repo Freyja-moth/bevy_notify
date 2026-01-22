@@ -39,30 +39,41 @@ impl<C: Component> NotifyRemoved<C> {
 pub(crate) fn notify_on_remove<C: Component>(
     remove: On<Remove, C>,
     mut commands: Commands,
-    internal_monitors: Query<(), (With<MonitoringSelf>, With<NotifyRemoved<C>>)>,
-    monitors: Query<
-        (Entity, Option<&Monitoring>),
-        (With<NotifyRemoved<C>>, Without<MonitoringSelf>),
+    local_monitors: Query<Entity, (With<NotifyRemoved<C>>, With<MonitoringSelf>)>,
+    monitors: Query<(Entity, &Monitoring), (With<NotifyRemoved<C>>, Without<MonitoringSelf>)>,
+    global_monitors: Query<
+        Entity,
+        (
+            With<NotifyRemoved<C>>,
+            Without<Monitoring>,
+            Without<MonitoringSelf>,
+        ),
     >,
 ) {
-    if internal_monitors.contains(remove.entity) {
-        commands.trigger(Removal {
+    if local_monitors.contains(remove.entity) {
+        commands.trigger(Removal::<C> {
             entity: remove.entity,
             removed: remove.entity,
-            _phantom: PhantomData::<C>,
+            _phantom: PhantomData,
         });
-    }
+    };
 
     monitors
         .iter()
-        .filter(|(_, monitoring)| {
-            monitoring.is_none_or(|&Monitoring(entity)| entity == remove.entity)
-        })
-        .for_each(|(entity, _)| {
-            commands.trigger(Removal {
+        .filter(|(_, Monitoring(entity))| *entity == remove.entity)
+        .for_each(|(entity, &Monitoring(removed))| {
+            commands.trigger(Removal::<C> {
                 entity,
-                removed: remove.entity,
-                _phantom: PhantomData::<C>,
-            })
+                removed,
+                _phantom: PhantomData,
+            });
         });
+
+    global_monitors.iter().for_each(|entity| {
+        commands.trigger(Removal::<C> {
+            entity,
+            removed: remove.entity,
+            _phantom: PhantomData,
+        });
+    });
 }

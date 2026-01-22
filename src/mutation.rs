@@ -43,32 +43,44 @@ impl<C: Component> NotifyChanged<C> {
 
 fn watch_for_change<C: Component>(
     mut commands: Commands,
-    monitored: Populated<(Entity, Has<MonitoringSelf>, Has<NotifyChanged<C>>), Changed<C>>,
-    monitors: Query<
-        (Entity, Option<&Monitoring>),
-        (With<NotifyChanged<C>>, Without<MonitoringSelf>),
+    changed: Populated<Entity, Changed<C>>,
+    local_monitors: Query<Entity, (With<NotifyChanged<C>>, With<MonitoringSelf>)>,
+    monitors: Query<(Entity, &Monitoring), (With<NotifyChanged<C>>, Without<MonitoringSelf>)>,
+    global_monitors: Query<
+        Entity,
+        (
+            With<NotifyChanged<C>>,
+            Without<MonitoringSelf>,
+            Without<Monitoring>,
+        ),
     >,
 ) {
-    for (entity, monitering_self, notify_changed) in monitored {
-        if monitering_self && notify_changed {
-            commands.trigger(Mutation {
-                entity,
-                mutated: entity,
-                _phantom: PhantomData::<C>,
-            });
-        }
+    local_monitors.iter_many(changed.iter()).for_each(|entity| {
+        commands.trigger(Mutation::<C> {
+            entity,
+            mutated: entity,
+            _phantom: PhantomData,
+        });
+    });
 
-        monitors
-            .iter()
-            .filter(|(_, monitoring)| {
-                monitoring.is_none_or(|&Monitoring(monitored)| monitored == entity)
+    monitors
+        .iter()
+        .filter(|(_, Monitoring(entity))| changed.contains(*entity))
+        .for_each(|(entity, &Monitoring(mutated))| {
+            commands.trigger(Mutation::<C> {
+                entity,
+                mutated,
+                _phantom: PhantomData,
             })
-            .for_each(|(monitor, _)| {
-                commands.trigger(Mutation {
-                    entity: monitor,
-                    mutated: entity,
-                    _phantom: PhantomData::<C>,
-                })
-            })
-    }
+        });
+
+    global_monitors.iter().for_each(|global_monitor| {
+        changed.iter().for_each(|mutated| {
+            commands.trigger(Mutation::<C> {
+                entity: global_monitor,
+                mutated,
+                _phantom: PhantomData,
+            });
+        });
+    });
 }
