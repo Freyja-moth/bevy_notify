@@ -68,7 +68,7 @@ fn setup(mut commands: Commands) {
             Name::new("Player"),
             Player,
             Health(100),
-            MonitoringSelf,
+            MonitorSelf,
             NotifyChanged::<Health>::default(),
             NotifyRemoved::<Player>::default(),
             observe(|_: On<Removal<Player>>, mut commands: Commands| {
@@ -105,7 +105,7 @@ fn setup(mut commands: Commands) {
         children![
             (
                 HealthBar,
-                Monitoring(player),
+                Monitor(player),
                 NotifyChanged::<Health>::default(),
                 observe(
                     |mutation: On<Mutation<Health>>,
