@@ -66,16 +66,9 @@ impl<C: Component> NotifyAdded<C> {
 pub(crate) fn notify_on_add<C: Component>(
     add: On<Add, C>,
     mut commands: Commands,
-    local_monitors: Query<Entity, (With<NotifyAdded<C>>, With<MonitoringSelf>)>,
-    monitors: Query<(Entity, &Monitoring), (With<NotifyAdded<C>>, Without<MonitoringSelf>)>,
-    global_monitors: Query<
-        Entity,
-        (
-            With<NotifyAdded<C>>,
-            Without<Monitoring>,
-            Without<MonitoringSelf>,
-        ),
-    >,
+    local_monitors: Query<Entity, (With<NotifyAdded<C>>, With<MonitorSelf>)>,
+    monitors: Query<(Entity, &Monitor), With<NotifyAdded<C>>>,
+    global_monitors: Query<Entity, (With<NotifyAdded<C>>, Without<Monitor>, Without<MonitorSelf>)>,
 ) {
     if local_monitors.contains(add.entity) {
         commands.trigger(Addition::<C> {
@@ -87,8 +80,8 @@ pub(crate) fn notify_on_add<C: Component>(
 
     monitors
         .iter()
-        .filter(|(_, Monitoring(entity))| *entity == add.entity)
-        .for_each(|(entity, &Monitoring(added))| {
+        .filter(|(_, Monitor(entity))| *entity == add.entity)
+        .for_each(|(entity, &Monitor(added))| {
             commands.trigger(Addition::<C> {
                 entity,
                 added,
@@ -103,4 +96,58 @@ pub(crate) fn notify_on_add<C: Component>(
             _phantom: PhantomData,
         });
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::prelude::*;
+    use bevy::prelude::*;
+
+    #[derive(Component)]
+    pub struct Player;
+
+    #[derive(Component)]
+    pub struct Poisoned;
+
+    #[test]
+    fn check_for_addition() {
+        #[derive(Resource, Default, Debug)]
+        pub struct TimesPoisoned(usize);
+
+        let mut world = World::new();
+
+        world.init_resource::<TimesPoisoned>();
+
+        let player = world
+            .spawn((Player, MonitorSelf, NotifyAdded::<Poisoned>::default()))
+            .observe(
+                |_: On<Addition<Poisoned>>, mut status_effect_count: ResMut<TimesPoisoned>| {
+                    status_effect_count.0 += 1;
+                },
+            )
+            .id();
+
+        assert_eq!(world.resource::<TimesPoisoned>().0, 0);
+
+        world.entity_mut(player).insert(Poisoned);
+
+        assert_eq!(world.resource::<TimesPoisoned>().0, 1);
+
+        world.entity_mut(player).remove::<Poisoned>();
+
+        assert_eq!(world.resource::<TimesPoisoned>().0, 1);
+
+        world.entity_mut(player).insert(Poisoned);
+
+        assert_eq!(world.resource::<TimesPoisoned>().0, 2);
+
+        // Remove the reactivity.
+
+        world
+            .entity_mut(player)
+            .remove::<NotifyAdded<Poisoned>>()
+            .insert(Poisoned);
+
+        assert_eq!(world.resource::<TimesPoisoned>().0, 2);
+    }
 }

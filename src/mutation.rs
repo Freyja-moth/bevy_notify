@@ -10,6 +10,11 @@ use std::marker::PhantomData;
 /// Used to indicate that the component [`C`] is being watched by a system to prevent systems from
 /// being added multiple times.
 struct DetectingChanges<C>(PhantomData<C>);
+impl<C> Default for DetectingChanges<C> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
 
 #[derive(EntityEvent)]
 /// Indicates that the component [`C`] on the monitered entity has changed.
@@ -21,7 +26,7 @@ pub struct Mutation<C: Component> {
 }
 #[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[component(
-    on_add = NotifyChanged::<C>::register_component_change_system, 
+    on_add = NotifyChanged::<C>::register_component_change_system,
     on_remove = NotifyChanged::<C>::remove_component_change_system
 )]
 /// Specifies that a moniter should react to all changed to [`C`] on the monitered entity.
@@ -41,7 +46,7 @@ impl<C: Component> NotifyChanged<C> {
             world.schedule_scope(Update, |_, schedule| {
                 schedule.add_systems(watch_for_change::<C>);
             });
-            world.insert_resource(DetectingChanges::<C>(PhantomData));
+            world.insert_resource(DetectingChanges::<C>::default());
         });
     }
     fn remove_component_change_system(mut world: DeferredWorld, _: HookContext) {
@@ -77,14 +82,14 @@ impl<C: Component> NotifyChanged<C> {
 fn watch_for_change<C: Component>(
     mut commands: Commands,
     changed: Populated<Entity, Changed<C>>,
-    local_monitors: Query<Entity, (With<NotifyChanged<C>>, With<MonitoringSelf>)>,
-    monitors: Query<(Entity, &Monitoring), (With<NotifyChanged<C>>, Without<MonitoringSelf>)>,
+    local_monitors: Query<Entity, (With<NotifyChanged<C>>, With<MonitorSelf>)>,
+    monitors: Query<(Entity, &Monitor), With<NotifyChanged<C>>>,
     global_monitors: Query<
         Entity,
         (
             With<NotifyChanged<C>>,
-            Without<MonitoringSelf>,
-            Without<Monitoring>,
+            Without<MonitorSelf>,
+            Without<Monitor>,
         ),
     >,
 ) {
@@ -98,8 +103,8 @@ fn watch_for_change<C: Component>(
 
     monitors
         .iter()
-        .filter(|(_, Monitoring(entity))| changed.contains(*entity))
-        .for_each(|(entity, &Monitoring(mutated))| {
+        .filter(|(_, Monitor(entity))| changed.contains(*entity))
+        .for_each(|(entity, &Monitor(mutated))| {
             commands.trigger(Mutation::<C> {
                 entity,
                 mutated,
@@ -116,4 +121,98 @@ fn watch_for_change<C: Component>(
             });
         });
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::prelude::*;
+    use bevy::prelude::*;
+
+    #[derive(Component)]
+    pub struct Player;
+
+    #[test]
+    fn check_for_mutation() {
+        #[derive(Resource, Default, Debug)]
+        pub struct TimesMoved(usize);
+
+        #[derive(EntityEvent)]
+        pub struct MoveX {
+            #[event_target]
+            actor: Entity,
+            amount: f32,
+        }
+
+        let mut world = World::new();
+
+        world.add_schedule(Schedule::new(Update));
+
+        world.init_resource::<TimesMoved>();
+
+        let player = world
+            .spawn((
+                Player,
+                Transform::default(),
+                MonitorSelf,
+                NotifyChanged::<Transform>::default(),
+            ))
+            .observe(
+                |_: On<Mutation<Transform>>, mut times_moved: ResMut<TimesMoved>| {
+                    times_moved.0 += 1;
+                },
+            )
+            .observe(
+                |move_x: On<MoveX>,
+                 mut transforms: Query<&mut Transform>|
+                 -> Result<(), BevyError> {
+                    let mut transform = transforms.get_mut(move_x.actor)?;
+
+                    transform.translation.x += move_x.amount;
+                    Ok(())
+                },
+            )
+            .id();
+
+        assert_eq!(world.resource::<TimesMoved>().0, 0);
+
+        world.trigger(MoveX {
+            actor: player,
+            amount: 10.,
+        });
+
+        world.run_schedule(Update);
+
+        assert_eq!(world.resource::<TimesMoved>().0, 1);
+
+        world.trigger(MoveX {
+            actor: player,
+            amount: 5.,
+        });
+
+        world.run_schedule(Update);
+
+        assert_eq!(world.resource::<TimesMoved>().0, 2);
+
+        world.trigger(MoveX {
+            actor: player,
+            amount: -2.,
+        });
+
+        world.run_schedule(Update);
+
+        assert_eq!(world.resource::<TimesMoved>().0, 3);
+
+        // Remove the reactivity.
+
+        world
+            .entity_mut(player)
+            .remove::<NotifyChanged<Transform>>();
+
+        world.trigger(MoveX {
+            actor: player,
+            amount: -100.,
+        });
+
+        assert_eq!(world.resource::<TimesMoved>().0, 3);
+    }
 }

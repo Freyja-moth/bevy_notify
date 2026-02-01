@@ -67,14 +67,14 @@ impl<C: Component> NotifyRemoved<C> {
 pub(crate) fn notify_on_remove<C: Component>(
     remove: On<Remove, C>,
     mut commands: Commands,
-    local_monitors: Query<Entity, (With<NotifyRemoved<C>>, With<MonitoringSelf>)>,
-    monitors: Query<(Entity, &Monitoring), (With<NotifyRemoved<C>>, Without<MonitoringSelf>)>,
+    local_monitors: Query<Entity, (With<NotifyRemoved<C>>, With<MonitorSelf>)>,
+    monitors: Query<(Entity, &Monitor), With<NotifyRemoved<C>>>,
     global_monitors: Query<
         Entity,
         (
             With<NotifyRemoved<C>>,
-            Without<Monitoring>,
-            Without<MonitoringSelf>,
+            Without<Monitor>,
+            Without<MonitorSelf>,
         ),
     >,
 ) {
@@ -88,8 +88,8 @@ pub(crate) fn notify_on_remove<C: Component>(
 
     monitors
         .iter()
-        .filter(|(_, Monitoring(entity))| *entity == remove.entity)
-        .for_each(|(entity, &Monitoring(removed))| {
+        .filter(|(_, Monitor(entity))| *entity == remove.entity)
+        .for_each(|(entity, &Monitor(removed))| {
             commands.trigger(Removal::<C> {
                 entity,
                 removed,
@@ -104,4 +104,56 @@ pub(crate) fn notify_on_remove<C: Component>(
             _phantom: PhantomData,
         });
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::prelude::*;
+    use bevy::prelude::*;
+
+    #[derive(Component)]
+    pub struct Player;
+
+    #[derive(Component)]
+    pub struct Purse;
+
+    #[test]
+    fn check_for_removal() {
+        #[derive(Resource, Debug)]
+        pub struct HasPurse(bool);
+
+        let mut world = World::new();
+
+        world.insert_resource(HasPurse(true));
+
+        let player = world
+            .spawn((
+                Player,
+                Purse,
+                MonitorSelf,
+                NotifyRemoved::<Purse>::default(),
+            ))
+            .observe(|_: On<Removal<Purse>>, mut has_purse: ResMut<HasPurse>| {
+                has_purse.0 = false;
+            })
+            .id();
+
+        assert!(world.resource::<HasPurse>().0);
+
+        world.entity_mut(player).remove::<Purse>();
+
+        assert!(!world.resource::<HasPurse>().0);
+
+        // Remove the reactivity.
+
+        world.insert_resource(HasPurse(true));
+        world.entity_mut(player).insert(Purse);
+
+        world
+            .entity_mut(player)
+            .remove::<NotifyRemoved<Purse>>()
+            .remove::<Purse>();
+
+        assert!(world.resource::<HasPurse>().0);
+    }
 }

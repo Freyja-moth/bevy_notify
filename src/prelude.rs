@@ -1,6 +1,6 @@
 pub use crate::{
     addition::{Addition, NotifyAdded},
-    monitors::{MonitoredBy, Monitoring, MonitoringSelf},
+    monitors::{Monitor, MonitorSelf, MonitoredBy},
     mutation::{Mutation, NotifyChanged},
     removal::{NotifyRemoved, Removal},
 };
