@@ -6,6 +6,7 @@ A reactive(ish) system for the bevy game engine using relationships.
 use bevy_notify::prelude::*;
 use bevy::{prelude::*, ui_widgets::observe};
 
+#[derive(Component)]
 pub struct Health(pub u8);
 
 let player = commands
@@ -23,7 +24,7 @@ let player = commands
 
 commands.spawn((
     Name::new("Doctor"),
-    Monitoring(player),
+    Monitor(player),
     NotifyChanged::<Health>::default(),
     observe(
         |mutation: On<Mutation<Health>>,
@@ -36,7 +37,7 @@ commands.spawn((
             }
 
             Ok(())
-         },
+         }
      ),
 ));
 ```
