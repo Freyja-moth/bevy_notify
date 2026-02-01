@@ -4,8 +4,10 @@ use std::marker::PhantomData;
 
 #[derive(Resource)]
 /// Used to indicate that the component [`C`] already has an observer detecting when it is added.
-struct DetectingAdded<C: Component>(PhantomData<C>);
-
+struct DetectingAdded<C: Component> {
+    observer: Entity,
+    _phantom: PhantomData<C>,
+}
 #[derive(EntityEvent)]
 /// Indicates that the component [`C`] on the monitered entity has been added.
 pub struct Addition<C: Component> {
@@ -16,7 +18,10 @@ pub struct Addition<C: Component> {
 }
 
 #[derive(Component)]
-#[component(on_add = NotifyAdded::<C>::register_component_add_observer)]
+#[component(
+    on_add = NotifyAdded::<C>::register_component_add_observer,
+    on_remove = NotifyAdded::<C>::remove_component_add_observer
+)]
 pub struct NotifyAdded<C: Component>(PhantomData<C>);
 impl<C: Component> Default for NotifyAdded<C> {
     fn default() -> Self {
@@ -30,8 +35,31 @@ impl<C: Component> NotifyAdded<C> {
         }
 
         let mut commands = world.commands();
-        commands.insert_resource(DetectingAdded::<C>(PhantomData));
-        commands.add_observer(notify_on_add::<C>);
+        let observer = commands.add_observer(notify_on_add::<C>).id();
+        commands.insert_resource(DetectingAdded::<C> {
+            observer,
+            _phantom: PhantomData,
+        });
+    }
+    fn remove_component_add_observer(mut world: DeferredWorld, _: HookContext) {
+        // # Safety
+        // The only component being queried for is on that must already exist in the world for this
+        // hook to run
+        let total_reactive = world
+            .try_query_filtered::<(), With<Self>>()
+            .unwrap()
+            .iter(&world)
+            .count();
+
+        if total_reactive == 0 {
+            world.commands().queue(|world: &mut World| {
+                // # Safety
+                // In order for this component to be removed `NotifyAdded::register_component_add_observer` must have run which adds the `DetectingAdded` resource.
+                let DetectingAdded { observer, .. } =
+                    world.remove_resource::<DetectingAdded<C>>().unwrap();
+                world.entity_mut(observer).despawn();
+            });
+        }
     }
 }
 
