@@ -10,7 +10,9 @@ struct DetectingRemoved<C: Component> {
 }
 
 #[derive(EntityEvent)]
-/// Indicates that the component [`C`] on the monitered entity has been removed.
+/// Indicates that the component [`C`] has been removed from an entity watched by a monitor.
+///
+/// See [`NotifyRemoved<C>`] for more information on how this is triggered.
 pub struct Removal<C: Component> {
     pub entity: Entity,
     /// The [`Entity`] that [`C`] was removed from.
@@ -23,6 +25,11 @@ pub struct Removal<C: Component> {
     on_add = NotifyRemoved::<C>::register_component_remove_observer,
     on_remove = NotifyRemoved::<C>::remove_component_remove_observer
 )]
+/// Adding this component to a entity will cause it to react to component [`C`] being removed from
+/// an entity with [`Removal<C>`]
+///
+/// By default this will react to changes on **all** entities. See [`Monitor`], and [`MonitorSelf`]
+/// for restricting this.
 pub struct NotifyRemoved<C: Component>(PhantomData<C>);
 impl<C: Component> Default for NotifyRemoved<C> {
     fn default() -> Self {

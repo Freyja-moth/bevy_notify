@@ -9,7 +9,9 @@ struct DetectingAdded<C: Component> {
     _phantom: PhantomData<C>,
 }
 #[derive(EntityEvent)]
-/// Indicates that the component [`C`] on the monitered entity has been added.
+/// Indicates that the component [`C`] has been added to an entity watched by a monitor.
+///
+/// See [`NotifyAdded<C>`] for more information on how this is triggered.
 pub struct Addition<C: Component> {
     pub entity: Entity,
     /// The [`Entity`] that [`C`] was added to.
@@ -22,6 +24,18 @@ pub struct Addition<C: Component> {
     on_add = NotifyAdded::<C>::register_component_add_observer,
     on_remove = NotifyAdded::<C>::remove_component_add_observer
 )]
+/// Adding this component to a entity will cause it to react to component [`C`] being added to
+/// an entity with [`Addition<C>`]
+///
+/// By default this will react to changes on **all** entities. See [`Monitor`], and [`MonitorSelf`]
+/// for restricting this.
+///
+/// # Technical info
+///
+/// Adding this component to an entity will spawn an [`Observer`] for event [`On<Add, C>`], this is
+/// only done once.
+///
+/// When all instances of this component in the world are removed the observer will be despawned.
 pub struct NotifyAdded<C: Component>(PhantomData<C>);
 impl<C: Component> Default for NotifyAdded<C> {
     fn default() -> Self {

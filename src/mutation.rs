@@ -6,6 +6,10 @@ use bevy_ecs::{
 use bevy_reflect::Reflect;
 use std::marker::PhantomData;
 
+#[derive(SystemSet, Hash, PartialEq, Eq, Clone, Debug, Default)]
+/// The set that triggers reactivity for [`Mutation`]
+pub struct MutationSet;
+
 #[derive(Resource, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 /// Used to indicate that the component [`C`] is being watched by a system to prevent systems from
 /// being added multiple times.
@@ -17,19 +21,26 @@ impl<C> Default for DetectingChanges<C> {
 }
 
 #[derive(EntityEvent)]
-/// Indicates that the component [`C`] on the monitered entity has changed.
+/// Indicates that the component [`C`] has been changed on an entity watched by a monitor.
+///
+/// See [`NotifyChanged<C>`] for more information on how this is triggered.
 pub struct Mutation<C: Component> {
     pub entity: Entity,
     /// The [`Entity`] that [`C`] belongs to.
     pub mutated: Entity,
     pub(crate) _phantom: PhantomData<C>,
 }
+
 #[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[component(
     on_add = NotifyChanged::<C>::register_component_change_system,
     on_remove = NotifyChanged::<C>::remove_component_change_system
 )]
-/// Specifies that a moniter should react to all changed to [`C`] on the monitered entity.
+/// Adding this component to a entity will cause it to react to changes on component [`C`] with
+/// [`Mutation<C>`]
+///
+/// By default this will react to changes on **all** entities. See [`Monitor`], and [`MonitorSelf`]
+/// for restricting this.
 pub struct NotifyChanged<C: Component>(PhantomData<C>);
 impl<C: Component> Default for NotifyChanged<C> {
     fn default() -> Self {
@@ -44,7 +55,8 @@ impl<C: Component> NotifyChanged<C> {
 
         world.commands().queue(|world: &mut World| {
             world.schedule_scope(Update, |_, schedule| {
-                schedule.add_systems(watch_for_change::<C>);
+                schedule.configure_sets(MutationSet);
+                schedule.add_systems(watch_for_change::<C>.in_set(MutationSet));
             });
             world.insert_resource(DetectingChanges::<C>::default());
         });

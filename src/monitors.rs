@@ -8,9 +8,18 @@ pub struct MonitoredBy(Vec<Entity>);
 
 #[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[relationship(relationship_target = MonitoredBy)]
-/// A moniter is updated each time the components of the entity it's watching are changed.
+/// Component used to specify the entity that a monitor reacts to.
 ///
-/// To control which components are watched use [`Notify`]
+/// Due to the fact that it is a [`Relationship`] this cannot be self-referencial. If you need this
+/// behaviour use [`MonitorSelf`].
+///
+/// Adding both [`Monitor`] and [`MonitorSelf`] to an entity will cause it to react to changes on
+/// itself, and the entity specified by [`Monitor`].
+///
+/// A monitor without [`Monitor`] and [`MonitorSelf`] will react to all entities. **Where possible it
+/// is adviced to not use this behaviour for high traffic components as it can cause lag**.
+///
+/// See [`NotifyChanged`], [`NotifyAdded`], and [`NotifyRemoved`], for how to define reactions.
 ///
 /// ```rust
 /// # use bevy_notify::prelude::*;
@@ -50,7 +59,18 @@ pub struct MonitoredBy(Vec<Entity>);
 pub struct Monitor(pub Entity);
 
 #[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Debug)]
-/// Used to detect changes on the same entity.
+/// Component used to specify that an entity will react to itself.
+///
+/// If you want to react to changes on other entities see [`Monitor`].
+///
+/// Adding both [`Monitor`] and [`MonitorSelf`] to an entity will cause it to react to itself,
+/// and the entity specified by [`Monitor`].
+///
+/// A monitor without [`Monitor`] and [`MonitorSelf`] will react to all entities. **Where possible it
+/// is adviced to not use this behaviour for high traffic components as it can cause lag**.
+///
+/// See [`NotifyChanged`], [`NotifyAdded`], and [`NotifyRemoved`], for how to define reactions.
+///
 pub struct MonitorSelf;
 
 #[cfg(test)]

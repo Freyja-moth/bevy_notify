@@ -2,6 +2,8 @@
 
 A reactive(ish) system for the bevy game engine using relationships.
 
+Monitor are entities that watch for changes, additions, and removals of specified components with `NotifyChanged<Component>`, `NotifyAdded<Component>`, and `NotifyRemoved<Component>`. By default monitors watch for changes on all entities, but this can be restricted via, [`Monitor`], and [`MonitorSelf`].
+
 ```rust
 use bevy_notify::prelude::*;
 use bevy::{prelude::*, ui_widgets::observe};
@@ -41,10 +43,6 @@ commands.spawn((
      ),
 ));
 ```
-
-## Documentation
-
-Docs aren't great atm, will improve in time but for the time being just make an issue whenever you run into something.
 
 ## Future Work
 
