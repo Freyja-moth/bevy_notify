@@ -1,6 +1,8 @@
 use crate::prelude::*;
 use bevy_app::Update;
-use bevy_ecs::{lifecycle::HookContext, prelude::*, world::DeferredWorld};
+use bevy_ecs::{
+    lifecycle::HookContext, prelude::*, schedule::ScheduleCleanupPolicy, world::DeferredWorld,
+};
 use bevy_reflect::Reflect;
 use std::marker::PhantomData;
 
@@ -18,7 +20,10 @@ pub struct Mutation<C: Component> {
     pub(crate) _phantom: PhantomData<C>,
 }
 #[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
-#[component(on_add = NotifyChanged::<C>::register_component_change_system)]
+#[component(
+    on_add = NotifyChanged::<C>::register_component_change_system, 
+    on_remove = NotifyChanged::<C>::remove_component_change_system
+)]
 /// Specifies that a moniter should react to all changed to [`C`] on the monitered entity.
 pub struct NotifyChanged<C: Component>(PhantomData<C>);
 impl<C: Component> Default for NotifyChanged<C> {
@@ -38,6 +43,34 @@ impl<C: Component> NotifyChanged<C> {
             });
             world.insert_resource(DetectingChanges::<C>(PhantomData));
         });
+    }
+    fn remove_component_change_system(mut world: DeferredWorld, _: HookContext) {
+        // # Safety
+        // The only component being queried for is on that must already exist in the world for this
+        // hook to run
+        let total_reactive = world
+            .try_query_filtered::<(), With<Self>>()
+            .unwrap()
+            .iter(&world)
+            .count();
+
+        if total_reactive == 0 {
+            world.commands().queue(|world: &mut World| {
+                world.schedule_scope(Update, |world, schedule| {
+                    // # Safety
+                    // This hook can only run when `NotifyChanged::<C>` has been removed which
+                    // ensures this sytem must exist in the `Update` schedule.
+                    schedule
+                        .remove_systems_in_set(
+                            watch_for_change::<C>,
+                            world,
+                            ScheduleCleanupPolicy::RemoveSystemsOnly,
+                        )
+                        .unwrap();
+                });
+                world.remove_resource::<DetectingChanges<C>>();
+            });
+        }
     }
 }
 
