@@ -16,7 +16,7 @@ pub struct Addition<C: Component> {
     pub entity: Entity,
     /// The [`Entity`] that [`C`] was added to.
     pub added: Entity,
-    pub(crate) _phantom: PhantomData<C>,
+    _phantom: PhantomData<C>,
 }
 
 #[derive(Component)]
@@ -25,7 +25,7 @@ pub struct Addition<C: Component> {
     on_remove = NotifyAdded::<C>::remove_component_add_observer
 )]
 /// Adding this component to a entity will cause it to react to component [`C`] being added to
-/// an entity with [`Addition<C>`]
+/// an entity with [`Addition<C>`].
 ///
 /// By default this will react to changes on **all** entities. See [`Monitor`], and [`MonitorSelf`]
 /// for restricting this.

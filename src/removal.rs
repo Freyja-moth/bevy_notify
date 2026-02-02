@@ -17,7 +17,7 @@ pub struct Removal<C: Component> {
     pub entity: Entity,
     /// The [`Entity`] that [`C`] was removed from.
     pub removed: Entity,
-    pub(crate) _phantom: PhantomData<C>,
+    _phantom: PhantomData<C>,
 }
 
 #[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]

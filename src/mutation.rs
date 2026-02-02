@@ -28,7 +28,7 @@ pub struct Mutation<C: Component> {
     pub entity: Entity,
     /// The [`Entity`] that [`C`] belongs to.
     pub mutated: Entity,
-    pub(crate) _phantom: PhantomData<C>,
+    _phantom: PhantomData<C>,
 }
 
 #[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
