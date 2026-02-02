@@ -90,7 +90,7 @@ pub(crate) fn notify_on_add<C: Component>(
             added: add.entity,
             _phantom: PhantomData,
         });
-    };
+    }
 
     monitors
         .iter()

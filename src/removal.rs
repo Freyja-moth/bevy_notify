@@ -91,7 +91,7 @@ pub(crate) fn notify_on_remove<C: Component>(
             removed: remove.entity,
             _phantom: PhantomData,
         });
-    };
+    }
 
     monitors
         .iter()

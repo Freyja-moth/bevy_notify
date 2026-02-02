@@ -121,7 +121,7 @@ fn watch_for_change<C: Component>(
                 entity,
                 mutated,
                 _phantom: PhantomData,
-            })
+            });
         });
 
     global_monitors.iter().for_each(|global_monitor| {
