@@ -5,7 +5,7 @@ description = "A reactive(ish) crate for the bevy engine"
 authors = [ "Freyja Moth" ]
 
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/Freyja-moth/bevy_notify"
+repository = "https://github.com/Freyja-moth/bevy_monitors"
 
 version = "0.2.0"
 edition = "2024"
