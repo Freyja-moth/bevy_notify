@@ -6,7 +6,7 @@ use bevy_reflect::Reflect;
 /// Contains all the monitors that are watching this entity.
 pub struct MonitoredBy(Vec<Entity>);
 
-#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Component, Reflect, FromTemplate, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[relationship(relationship_target = MonitoredBy)]
 /// Component used to specify the entity that a monitor reacts to.
 ///
@@ -58,7 +58,7 @@ pub struct MonitoredBy(Vec<Entity>);
 /// ```
 pub struct Monitor(pub Entity);
 
-#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Debug)]
+#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Default, Debug)]
 /// Component used to specify that an entity will react to itself.
 ///
 /// If you want to react to changes on other entities see [`Monitor`].

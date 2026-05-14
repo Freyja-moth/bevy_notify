@@ -1,13 +1,15 @@
 use crate::prelude::*;
 use bevy_ecs::{lifecycle::HookContext, prelude::*, world::DeferredWorld};
+use bevy_reflect::Reflect;
 use std::marker::PhantomData;
 
-#[derive(Resource)]
+#[derive(Resource, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 /// Used to indicate that the component [`C`] already has an observer detecting when it is added.
 struct DetectingAdded<C: Component> {
     observer: Entity,
     _phantom: PhantomData<C>,
 }
+
 #[derive(EntityEvent)]
 /// Indicates that the component [`C`] has been added to an entity watched by a monitor.
 ///
@@ -19,7 +21,7 @@ pub struct Addition<C: Component> {
     _phantom: PhantomData<C>,
 }
 
-#[derive(Component)]
+#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 #[component(
     on_add = NotifyAdded::<C>::register_component_add_observer,
     on_remove = NotifyAdded::<C>::remove_component_add_observer

@@ -10,7 +10,7 @@ use std::marker::PhantomData;
 /// The set that triggers reactivity for [`Mutation`]
 pub struct MutationSet;
 
-#[derive(Resource, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Resource, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 /// Used to indicate that the component [`C`] is being watched by a system to prevent systems from
 /// being added multiple times.
 struct DetectingChanges<C>(PhantomData<C>);
@@ -31,7 +31,7 @@ pub struct Mutation<C: Component> {
     _phantom: PhantomData<C>,
 }
 
-#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 #[component(
     on_add = NotifyChanged::<C>::register_component_change_system,
     on_remove = NotifyChanged::<C>::remove_component_change_system

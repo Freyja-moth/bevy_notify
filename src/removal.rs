@@ -3,7 +3,7 @@ use bevy_ecs::{lifecycle::HookContext, prelude::*, world::DeferredWorld};
 use bevy_reflect::Reflect;
 use std::marker::PhantomData;
 
-#[derive(Resource, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Resource, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 struct DetectingRemoved<C: Component> {
     observer: Entity,
     _phantom: PhantomData<C>,
@@ -20,7 +20,7 @@ pub struct Removal<C: Component> {
     _phantom: PhantomData<C>,
 }
 
-#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Component, Reflect, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 #[component(
     on_add = NotifyRemoved::<C>::register_component_remove_observer,
     on_remove = NotifyRemoved::<C>::remove_component_remove_observer
