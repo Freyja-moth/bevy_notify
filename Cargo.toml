@@ -16,4 +16,4 @@ bevy_ecs = { git = "https://github.com/bevyengine/bevy" }
 bevy_reflect = { git = "https://github.com/bevyengine/bevy" }
 
 [dev-dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy", features = ["bevy_ui_widgets"] }
+bevy = { git = "https://github.com/bevyengine/bevy", features = ["bevy_feathers"] }
